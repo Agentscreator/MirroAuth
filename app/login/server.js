@@ -1,5 +1,5 @@
 const express = require('express');
-const { auth } = require('express-openid-connect');
+const { auth, requiresAuth } = require('express-openid-connect');
 const app = express();
 
 // Auth0 configuration
@@ -28,6 +28,12 @@ app.get('/login', (req, res) => {
 // Define a route for logout (redirects to Auth0 logout)
 app.get('/logout', (req, res) => {
   res.oidc.logout();
+});
+
+// Protected Route: Requires authentication
+app.get('/profile', requiresAuth(), (req, res) => {
+  // If authenticated, show user profile
+  res.send(JSON.stringify(req.oidc.user));  // This will return the user profile info
 });
 
 // Start the server
