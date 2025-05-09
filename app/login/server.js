@@ -2,7 +2,7 @@ const express = require('express');
 const { auth, requiresAuth } = require('express-openid-connect');
 const app = express();
 
-// Auth0 configuration
+// Auth0 configuration I actually decided to switch to PostgreSQL but I'm just keeping this code for memories sake
 const config = {
   authRequired: false,
   auth0Logout: true,

@@ -29,6 +29,15 @@ export default function SignupPage() {
   const [step, setStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
 
+  const [contacts, setContacts] = useState<{ name: string; tel?: string[] }[]>([])
+
+
+    // 👇 Load contacts when step 3 is reached
+    useEffect(() => {
+      if (step === 3) loadContacts()
+    }, [step])
+  
+
   // Step 1: Basic Info
   const [name, setName] = useState("")
   const [birthday, setBirthday] = useState("")
@@ -70,27 +79,57 @@ export default function SignupPage() {
     }, 1500)
   }
 
-  const handleCompleteSignup = () => {
+  const handleCompleteSignup = async () => {
     if (!termsAccepted) return
-
+  
     setIsLoading(true)
-    // Simulate signup completion
-    setTimeout(() => {
-      setIsLoading(false)
+  
+    try {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+  
+      const data = await res.json()
+  
+      if (!res.ok) {
+        throw new Error(data.error || "Signup failed")
+      }
+  
+      localStorage.setItem("token", data.token)
       router.push("/")
-    }, 1500)
+    } catch (err: any) {
+      alert(err.message || "Signup error")
+    } finally {
+      setIsLoading(false)
+    }
   }
+  
+  
+  const loadContacts = async () => {
+    if ("contacts" in navigator && "ContactsManager" in window) {
+      try {
+        const props = ["name", "tel"]
+        const opts = { multiple: true }
+  
+        const selected = await (navigator as any).contacts.select(props, opts)
+        setContacts(selected)
+      } catch (err) {
+        console.error("Contact permission denied or not supported")
+      }
+    } else {
+      alert("Contact access is not supported on this device.")
+    }
+  }
+  
 
-  const friends = [
-    { id: "1", name: "Taylor Kim", avatar: "/placeholder.svg?height=40&width=40" },
-    { id: "2", name: "Jordan Lee", avatar: "/placeholder.svg?height=40&width=40" },
-    { id: "3", name: "Alex Morgan", avatar: "/placeholder.svg?height=40&width=40" },
-    { id: "4", name: "Jamie Wong", avatar: "/placeholder.svg?height=40&width=40" },
-  ]
+  const filteredContacts = searchTerm
+  ? contacts.filter((contact) =>
+      contact.name[0].toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  : contacts
 
-  const filteredFriends = searchTerm
-    ? friends.filter((friend) => friend.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    : friends
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white flex flex-col">
@@ -465,7 +504,7 @@ export default function SignupPage() {
                       </div>
                       <div className="h-40 overflow-y-auto bg-black/20 rounded-lg p-3 text-xs text-slate-300 mb-4">
                         <p className="mb-2">
-                          Welcome to Genesis. By using our service, you agree to these Terms of Service and our Privacy
+                          Welcome to Mirro. By using our service, you agree to these Terms of Service and our Privacy
                           Policy.
                         </p>
                         <p className="mb-2">

@@ -20,16 +20,35 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
-    // Simulate login process
-    setTimeout(() => {
-      setIsLoading(false)
+  
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      })
+  
+      const data = await res.json()
+  
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed")
+      }
+  
+      // Save JWT (e.g., in localStorage or a cookie)
+      localStorage.setItem("token", data.token)
+  
+      // Redirect to main app page
       router.push("/")
-    }, 1500)
+    } catch (err: any) {
+      alert(err.message || "Login error")
+    } finally {
+      setIsLoading(false)
+    }
   }
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white flex flex-col">
